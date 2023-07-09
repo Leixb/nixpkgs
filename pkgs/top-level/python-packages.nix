@@ -466,7 +466,13 @@ self: super: with self; {
 
   amqtt = callPackage ../development/python-modules/amqtt { };
 
+  amulet-core = callPackage ../development/python-modules/amulet-core { };
+
+  amulet-leveldb = callPackage ../development/python-modules/amulet-leveldb { };
+
   amulet-map-editor = callPackage ../development/python-modules/amulet-map-editor { };
+
+  amulet-nbt = callPackage ../development/python-modules/amulet-nbt { };
 
   ancp-bids = callPackage ../development/python-modules/ancp-bids { };
 
@@ -6249,6 +6255,8 @@ self: super: with self; {
 
   millheater = callPackage ../development/python-modules/millheater { };
 
+  minecraft-model-reader = callPackage ../development/python-modules/minecraft-model-reader { };
+
   minexr = callPackage ../development/python-modules/minexr { };
 
   miniaudio = callPackage ../development/python-modules/miniaudio {
@@ -8884,6 +8892,8 @@ self: super: with self; {
   pymbolic = callPackage ../development/python-modules/pymbolic { };
 
   pymc = callPackage ../development/python-modules/pymc { };
+
+  pymctranslate = callPackage ../development/python-modules/pymctranslate { };
 
   pymdstat = callPackage ../development/python-modules/pymdstat { };
 

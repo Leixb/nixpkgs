@@ -1,0 +1,141 @@
+diff --git a/minecraft_model_reader/api/resource_pack/base/resource_pack_manager.py b/minecraft_model_reader/api/resource_pack/base/resource_pack_manager.py
+index 8bedc5f..0a83c70 100644
+--- a/minecraft_model_reader/api/resource_pack/base/resource_pack_manager.py
++++ b/minecraft_model_reader/api/resource_pack/base/resource_pack_manager.py
+@@ -2,12 +2,14 @@ from typing import List, Dict, Tuple, Generator, Optional
+ import os
+ import json
+ import copy
++import logging
+ 
+ from minecraft_model_reader.api import Block, BlockMesh
+ from minecraft_model_reader.api.resource_pack.base.resource_pack import BaseResourcePack
+ from minecraft_model_reader.api.image import missing_no_path
+ from minecraft_model_reader.api.mesh.block.missing_block import get_missing_block
+ 
++log = logging.getLogger(__name__)
+ 
+ class BaseResourcePackManager:
+     """The base class that all resource pack managers must inherit from. Defines the base api."""
+@@ -28,16 +30,12 @@ class BaseResourcePackManager:
+         self._cached_models.clear()
+ 
+     def _load_transparency_cache(self, path: str):
+-        if os.path.isfile(
+-            os.path.join(os.path.dirname(path), "transparency_cache.json")
+-        ):
+-            try:
+-                with open(
+-                    os.path.join(os.path.dirname(path), "transparency_cache.json")
+-                ) as f:
+-                    self._texture_is_transparent = json.load(f)
+-            except:
+-                pass
++        try:
++            with open(path) as f:
++                self._texture_is_transparent = json.load(f)
++        except:
++            log.warning("Failed to load transparency cache file.")
++            pass
+ 
+     def _load_iter(self) -> Generator[float, None, None]:
+         """Load resources."""
+diff --git a/minecraft_model_reader/api/resource_pack/java/download_resources.py b/minecraft_model_reader/api/resource_pack/java/download_resources.py
+index 13c921b..77b6ce3 100644
+--- a/minecraft_model_reader/api/resource_pack/java/download_resources.py
++++ b/minecraft_model_reader/api/resource_pack/java/download_resources.py
+@@ -1,4 +1,5 @@
+ import os
++import sys
+ import shutil
+ import zipfile
+ import json
+@@ -12,9 +13,27 @@ from minecraft_model_reader.api.resource_pack import JavaResourcePack
+ 
+ log = logging.getLogger(__name__)
+ 
+-RESOURCE_PACK_DIR = os.path.join(
+-    minecraft_model_reader.path, "api", "resource_pack", "java", "resource_packs"
++# IF RESOURCE_PACK_DIR is set, use that, otherwise use the default per platform
++RESOURCE_PACK_DIR = os.environ.get("RESOURCE_PACK_DIR")
++if RESOURCE_PACK_DIR is None:
++    if os.name == "nt":
++        USER_DATA_FOLDER = os.environ.get("APPDATA", os.path.expanduser("~/AppData/Roaming"))
++    elif sys.platform == "darwin":
++        USER_DATA_FOLDER = os.environ.get("HOME", os.path.expanduser("~/Library/Application Support"))
++    elif sys.platform == "linux":
++        USER_DATA_FOLDER = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
++    else:
++        log.warning("Could not find a suitable data folder to download resources. Using the library folder.")
++        USER_DATA_FOLDER = minecraft_model_reader.path
++
++    RESOURCE_PACK_DIR = os.path.join(USER_DATA_FOLDER, "minecraft_model_reader", "resource_packs")
++
++    log.info(f"Using {RESOURCE_PACK_DIR} as the resource pack directory.")
++
++RESOURCE_PACK_DIR_JAVA_VANILLA_FIX = os.path.join(
++    minecraft_model_reader.path, "api", "resource_pack", "java", "resource_packs", "java_vanilla_fix"
+ )
++
+ launcher_manifest = None
+ INCLUDE_SNAPSHOT = False
+ 
+@@ -82,9 +101,7 @@ _java_vanilla_latest = None
+ def get_java_vanilla_fix():
+     global _java_vanilla_fix
+     if _java_vanilla_fix is None:
+-        _java_vanilla_fix = JavaResourcePack(
+-            os.path.join(RESOURCE_PACK_DIR, "java_vanilla_fix")
+-        )
++        _java_vanilla_fix = JavaResourcePack(RESOURCE_PACK_DIR_JAVA_VANILLA_FIX)
+     return _java_vanilla_fix
+ 
+ 
+diff --git a/minecraft_model_reader/api/resource_pack/java/resource_pack_manager.py b/minecraft_model_reader/api/resource_pack/java/resource_pack_manager.py
+index fe568bc..d40a9ed 100644
+--- a/minecraft_model_reader/api/resource_pack/java/resource_pack_manager.py
++++ b/minecraft_model_reader/api/resource_pack/java/resource_pack_manager.py
+@@ -1,4 +1,5 @@
+ import os
++import sys
+ import json
+ import copy
+ from typing import Union, Dict, Tuple, Iterable, Generator
+@@ -23,6 +24,14 @@ from minecraft_model_reader.api.mesh.block.cube import (
+ 
+ log = logging.getLogger(__name__)
+ 
++if os.name == "nt":
++    CACHE_FOLDER = os.path.join("~", "AppData", "Local")
++elif sys.platform == "darwin":
++    CACHE_FOLDER = os.path.join("~", "Library", "Caches")
++else:
++    CACHE_FOLDER = os.environ.get("XDG_CACHE_HOME", os.path.join("~", ".cache"))
++
++CACHE_FOLDER = os.path.expanduser(os.path.join(CACHE_FOLDER, "minecraft_model_reader"))
+ 
+ UselessImageGroups = {
+     "colormap",
+@@ -73,7 +82,7 @@ class JavaResourcePackManager(BaseResourcePackManager):
+     def _load_iter(self) -> Generator[float, None, None]:
+         blockstate_file_paths: Dict[Tuple[str, str], str] = {}
+         model_file_paths: Dict[Tuple[str, str], str] = {}
+-        self._load_transparency_cache(__file__)
++        self._load_transparency_cache(os.path.join(CACHE_FOLDER, "transparency_cache.json"))
+ 
+         self._textures[("minecraft", "missing_no")] = self.missing_no
+ 
+@@ -171,8 +180,12 @@ class JavaResourcePackManager(BaseResourcePackManager):
+                     ] = model_path
+                     yield sub_progress + (model_index) / (model_count * pack_count * 3)
+ 
++        # Create cache folder if it doesn't exist
++        if not os.path.exists(CACHE_FOLDER):
++            os.makedirs(CACHE_FOLDER)
++
+         with open(
+-            os.path.join(os.path.dirname(__file__), "transparency_cache.json"), "w"
++            os.path.join(CACHE_FOLDER, "transparency_cache.json"), "w"
+         ) as f:
+             json.dump(self._texture_is_transparent, f)
+ 

@@ -1,54 +1,49 @@
+
 { lib
 , buildPythonPackage
 , fetchFromGitHub
 , setuptools
 , numpy
 , versioneer
+, portalocker
+, amulet-leveldb
 , pymctranslate
-, pyopengl
-, pyopengl-accelerate
-, amulet-core
+, minecraft-model-reader
 , cython
-, wxPython_4_2
 , pytestCheckHook
-, wrapGAppsHook
 }:
 
 buildPythonPackage rec {
-  pname = "amulet-map-editor";
-  version = "0.10.11";
+  pname = "amulet-core";
+  version = "1.9.14";
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "Amulet-Team";
-    repo = "Amulet-Map-Editor";
+    repo = "Amulet-Core";
     rev = version;
-    sha256 = "sha256-PSeOq4H6pcgBRqHKlOYvN4IqZhpsVqL/0zXjJyJNwnw=";
+    sha256 = "sha256-919+WpgAGkqNsF4VvAPXzFfWjLl5tAzX5cHnR+MHd5E=";
   };
+
+  patches = [ ./leveldb.patch ];
 
   # postPatch = ''
   #   substituteInPlace pytest.ini \
   #     --replace "--cov=kneed" ""
   # '';
 
-  patches = [
-    ./wxpython.patch
-  ];
-
   nativeBuildInputs = [
     setuptools
     cython
-    wrapGAppsHook
   ];
 
   propagatedBuildInputs = [
-    amulet-core
+    portalocker
     numpy
     versioneer
     pymctranslate
-    pyopengl
-    pyopengl-accelerate
-    wxPython_4_2
+    amulet-leveldb
+    minecraft-model-reader
   ];
 
   checkInputs = [

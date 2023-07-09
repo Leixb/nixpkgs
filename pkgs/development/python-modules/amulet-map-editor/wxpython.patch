@@ -1,0 +1,13 @@
+diff --git a/setup.cfg b/setup.cfg
+index 7965069f..1ef7f355 100644
+--- a/setup.cfg
++++ b/setup.cfg
+@@ -15,7 +15,7 @@ platforms = any
+ include_package_data = True
+ python_requires = >=3.6, <3.10
+ install_requires =
+-    wxPython==4.1.1
++    wxPython==4.*
+     numpy~=1.17
+     pyopengl~=3.0
+     ; pyopengl-accelerate does not work for M1 Macs. Amulet-Team/Amulet-Map-Editor#597

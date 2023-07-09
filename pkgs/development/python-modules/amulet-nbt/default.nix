@@ -1,29 +1,25 @@
+
 { lib
 , buildPythonPackage
 , fetchFromGitHub
 , setuptools
 , numpy
 , versioneer
-, pymctranslate
-, pyopengl
-, pyopengl-accelerate
-, amulet-core
 , cython
-, wxPython_4_2
+, mutf8
 , pytestCheckHook
-, wrapGAppsHook
 }:
 
 buildPythonPackage rec {
-  pname = "amulet-map-editor";
-  version = "0.10.11";
+  pname = "amulet-nbt";
+  version = "2.1.1";
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "Amulet-Team";
-    repo = "Amulet-Map-Editor";
+    repo = "Amulet-NBT";
     rev = version;
-    sha256 = "sha256-PSeOq4H6pcgBRqHKlOYvN4IqZhpsVqL/0zXjJyJNwnw=";
+    sha256 = "sha256-oVJeXrZt95JQGzwSuhWOKqo8c5DY0BFi3iZ5K9Gm1kM=";
   };
 
   # postPatch = ''
@@ -31,24 +27,15 @@ buildPythonPackage rec {
   #     --replace "--cov=kneed" ""
   # '';
 
-  patches = [
-    ./wxpython.patch
-  ];
-
   nativeBuildInputs = [
     setuptools
     cython
-    wrapGAppsHook
   ];
 
   propagatedBuildInputs = [
-    amulet-core
     numpy
     versioneer
-    pymctranslate
-    pyopengl
-    pyopengl-accelerate
-    wxPython_4_2
+    mutf8
   ];
 
   checkInputs = [

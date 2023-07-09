@@ -2,28 +2,23 @@
 , buildPythonPackage
 , fetchFromGitHub
 , setuptools
-, numpy
 , versioneer
-, pymctranslate
-, pyopengl
-, pyopengl-accelerate
-, amulet-core
+, numpy
 , cython
-, wxPython_4_2
+, amulet-nbt
 , pytestCheckHook
-, wrapGAppsHook
 }:
 
 buildPythonPackage rec {
-  pname = "amulet-map-editor";
-  version = "0.10.11";
+  pname = "PyMCTranslate";
+  version = "1.2.11";
   format = "pyproject";
 
   src = fetchFromGitHub {
-    owner = "Amulet-Team";
-    repo = "Amulet-Map-Editor";
+    owner = "gentlegiantJGC";
+    repo = "PyMCTranslate";
     rev = version;
-    sha256 = "sha256-PSeOq4H6pcgBRqHKlOYvN4IqZhpsVqL/0zXjJyJNwnw=";
+    sha256 = "sha256-sfhtkZqG2lOKZ9RIvvlQqqjPjz/nRSwmvkfn/jAYNNw=";
   };
 
   # postPatch = ''
@@ -31,24 +26,14 @@ buildPythonPackage rec {
   #     --replace "--cov=kneed" ""
   # '';
 
-  patches = [
-    ./wxpython.patch
-  ];
-
   nativeBuildInputs = [
     setuptools
-    cython
-    wrapGAppsHook
   ];
 
   propagatedBuildInputs = [
-    amulet-core
-    numpy
     versioneer
-    pymctranslate
-    pyopengl
-    pyopengl-accelerate
-    wxPython_4_2
+    amulet-nbt
+    numpy
   ];
 
   checkInputs = [
@@ -64,7 +49,7 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
-    description = "The new age Minecraft world editor and converter that supports every version since Java 1.12 and Bedrock 1.7";
+    description = "Translation system for Minecraft blocks, block entities, entities and items";
     homepage = "https://www.amuletmc.com/";
     # license = ;
     maintainers = with maintainers; [ leixb ];

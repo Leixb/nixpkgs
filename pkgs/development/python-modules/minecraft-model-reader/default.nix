@@ -4,51 +4,44 @@
 , setuptools
 , numpy
 , versioneer
-, pymctranslate
-, pyopengl
-, pyopengl-accelerate
-, amulet-core
+, amulet-nbt
+, pillow
 , cython
-, wxPython_4_2
 , pytestCheckHook
-, wrapGAppsHook
 }:
 
 buildPythonPackage rec {
-  pname = "amulet-map-editor";
-  version = "0.10.11";
+  pname = "minecraft-resource-pack";
+  version = "1.3.3";
   format = "pyproject";
 
   src = fetchFromGitHub {
-    owner = "Amulet-Team";
-    repo = "Amulet-Map-Editor";
+    owner = "gentlegiantJGC";
+    repo = "Minecraft-Model-Reader";
     rev = version;
-    sha256 = "sha256-PSeOq4H6pcgBRqHKlOYvN4IqZhpsVqL/0zXjJyJNwnw=";
+    sha256 = "sha256-CpspDffxcSuZ5YyYqjKx5+XDa5i9EmIHPpZLyZkbJdk=";
   };
+
+  patches = [
+    # Remove coverage
+    ./resource_path_xdg_data.patch
+  ];
 
   # postPatch = ''
   #   substituteInPlace pytest.ini \
   #     --replace "--cov=kneed" ""
   # '';
 
-  patches = [
-    ./wxpython.patch
-  ];
-
   nativeBuildInputs = [
     setuptools
     cython
-    wrapGAppsHook
   ];
 
   propagatedBuildInputs = [
-    amulet-core
+    amulet-nbt
+    pillow
     numpy
     versioneer
-    pymctranslate
-    pyopengl
-    pyopengl-accelerate
-    wxPython_4_2
   ];
 
   checkInputs = [
