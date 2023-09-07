@@ -32,36 +32,41 @@ with open(out_path, "w") as f:
   for pkg in desired_packages:
     uuid = pkg["uuid"]
 
-    if pkg["name"] in package_overrides:
-      treehash = util.get_commit_info(package_overrides[pkg["name"]])["tree"]
-      f.write(f"""  "{uuid}" = {{
-    src = null; # Overridden: will fill in later
-    name = "{pkg["name"]}";
-    version = "{ensure_version_valid(pkg["version"])}";
-    treehash = "{treehash}";
-  }};\n""")
-    elif uuid in registry["packages"]:
-      registry_info = registry["packages"][uuid]
-      path = registry_info["path"]
-      packageToml = toml.load(registry_path / path / "Package.toml")
+    try:
 
-      all_versions = toml.load(registry_path / path / "Versions.toml")
-      if not pkg["version"] in all_versions: continue
-      version_to_use = all_versions[pkg["version"]]
+        if pkg["name"] in package_overrides:
+          treehash = util.get_commit_info(package_overrides[pkg["name"]])["tree"]
+          f.write(f"""  "{uuid}" = {{
+        src = null; # Overridden: will fill in later
+        name = "{pkg["name"]}";
+        version = "{ensure_version_valid(pkg["version"])}";
+        treehash = "{treehash}";
+      }};\n""")
+        elif uuid in registry["packages"]:
+          registry_info = registry["packages"][uuid]
+          path = registry_info["path"]
+          packageToml = toml.load(registry_path / path / "Package.toml")
 
-      repo = packageToml["repo"]
-      f.write(f"""  "{uuid}" = {{
-    src = fetchgit {{
-      url = "{repo}";
-      rev = "{version_to_use["git-tree-sha1"]}";
-      sha256 = "{version_to_use["nix-sha256"]}";
-    }};
-    name = "{pkg["name"]}";
-    version = "{pkg["version"]}";
-    treehash = "{version_to_use["git-tree-sha1"]}";
-  }};\n""")
-    else:
-      # print("Warning: couldn't figure out what to do with pkg in sources_nix.py", pkg)
-      pass
+          all_versions = toml.load(registry_path / path / "Versions.toml")
+          if not pkg["version"] in all_versions: continue
+          version_to_use = all_versions[pkg["version"]]
+
+          repo = packageToml["repo"]
+          f.write(f"""  "{uuid}" = {{
+        src = fetchgit {{
+          url = "{repo}";
+          rev = "{version_to_use["git-tree-sha1"]}";
+          sha256 = "{version_to_use["nix-sha256"]}";
+        }};
+        name = "{pkg["name"]}";
+        version = "{pkg["version"]}";
+        treehash = "{version_to_use["git-tree-sha1"]}";
+      }};\n""")
+        else:
+          # print("Warning: couldn't figure out what to do with pkg in sources_nix.py", pkg)
+          pass
+    except KeyError as e:
+        print("Warning: couldn't figure out what to do with pkg in sources_nix.py", pkg, e)
+        raise e
 
   f.write("}")
