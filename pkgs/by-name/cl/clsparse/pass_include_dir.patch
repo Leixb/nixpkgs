@@ -1,0 +1,14 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3d139ed..b7ea2d3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -132,6 +132,9 @@ else( )
+       set( GMOCK_ROOT "$ENV{GMOCK_ROOT}" )
+     endif( )
+     list( APPEND clSPARSE.Cmake.Args -DGTEST_ROOT=${GMOCK_ROOT} )
++    if( DEFINED GTEST_INCLUDE_DIR )
++      list( APPEND clSPARSE.Cmake.Args -DGTEST_INCLUDE_DIR=${GTEST_INCLUDE_DIR} )
++    endif( )
+   endif( )
+ endif( )
+ 
