@@ -128,6 +128,7 @@ stdenv.mkDerivation (finalAttrs: {
   installCheckPhase = ''
     runHook preInstallCheck
 
+    export HWLOC_SYNTHETIC="node:1 core:1 pu:1"
     export OCL_ICD_VENDORS=$out/etc/OpenCL/vendors
     $out/bin/poclcc -o poclcc.cl.pocl $src/examples/poclcc/poclcc.cl
 
