@@ -13,35 +13,15 @@
   opencl-headers,
   ocl-icd,
   python3,
-  runCommand,
-  makeWrapper,
   writableTmpDirAsHomeHook,
 }:
 
-let
-  clang = llvmPackages.clangUseLLVM;
-  # Workaround to make sure libclang finds libgcc.a and libgcc_s.so when
-  # invoked from within libpocl
-  clangWrapped =
-    if stdenv.hostPlatform.isDarwin then
-      clang
-    else
-      runCommand "clang-pocl" { nativeBuildInputs = [ makeWrapper ]; } ''
-        mkdir -p $out/bin
-        cp -r ${clang}/bin/* $out/bin/
-        LIBGCC_DIR=$(dirname $(find ${stdenv.cc.cc}/lib/ -name libgcc.a))
-        for F in ${clang}/bin/ld*; do
-          BASENAME=$(basename "$F")
-          rm -f $out/bin/$BASENAME
-          makeWrapper ${clang}/bin/$BASENAME $out/bin/$BASENAME \
-            --add-flags "-L$LIBGCC_DIR" \
-            --add-flags "-L${lib.getLib stdenv.cc.cc}/lib"
-        done
-      '';
-in
 stdenv.mkDerivation (finalAttrs: {
   pname = "pocl";
   version = "7.2";
+
+  __structuredAttrs = true;
+  strictDeps = true;
 
   src = fetchFromGitHub {
     owner = "pocl";
@@ -79,8 +59,8 @@ stdenv.mkDerivation (finalAttrs: {
       # find_program()/find_llvm_program_or_die() short-circuit instead of
       # searching. The old CLANG/CLANGXX cache vars this replaces aren't
       # read by pocl's cmake at all anymore.
-      "HOST_CLANG" = "${clangWrapped}/bin/clang";
-      "HOST_CLANGXX" = "${clangWrapped}/bin/clang++";
+      "HOST_CLANG" = "${llvmPackages.clangUseLLVM}/bin/clang";
+      "HOST_CLANGXX" = "${llvmPackages.clangUseLLVM}/bin/clang++";
       "HOST_LLVM_OPT" = "${lib.getBin llvmPackages.llvm}/bin/opt";
       "HOST_LLVM_LLC" = "${lib.getBin llvmPackages.llvm}/bin/llc";
       "HOST_LLVM_AS" = "${lib.getBin llvmPackages.llvm}/bin/llvm-as";
@@ -96,12 +76,28 @@ stdenv.mkDerivation (finalAttrs: {
     ]
     ++ lib.optionals (!stdenv.hostPlatform.isx86_64) [
       (lib.cmakeFeature "LLC_HOST_CPU" "generic")
-    ];
+    ]
+    ++ (
+      # Fixes error: ld: cannot find -lgcc / -lgcc_s when linking from libpocl on
+      # host
+      # Should match the flags from : "${targetPackages.stdenv.cc}/nix-support/cc-ldflags
+      # But, we cannot use the file here without doing import from derivation
+      let
+        inherit (stdenv) targetPlatform hostPlatform;
+
+        gccForLibs = stdenv.cc.cc;
+        gccForLibs_solib =
+          lib.getLib gccForLibs
+          + lib.optionalString (targetPlatform != hostPlatform) "/${targetPlatform.config}";
+      in
+      [
+        (lib.cmakeFeature "EXTRA_HOST_LD_FLAGS" "-L${gccForLibs}/lib/gcc/${targetPlatform.config}/${gccForLibs.version} -L${gccForLibs_solib}/lib")
+      ]
+    );
 
   nativeBuildInputs = [
     cmake
     pkg-config
-    clangWrapped
     python3
   ];
 
