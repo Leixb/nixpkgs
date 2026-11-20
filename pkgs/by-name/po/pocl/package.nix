@@ -130,7 +130,11 @@ stdenv.mkDerivation (finalAttrs: {
 
     export HWLOC_SYNTHETIC="node:1 core:1 pu:1"
     export OCL_ICD_VENDORS=$out/etc/OpenCL/vendors
-    $out/bin/poclcc -o poclcc.cl.pocl $src/examples/poclcc/poclcc.cl
+    $out/bin/poclcc -o poclcc.cl.pocl $src/examples/poclcc/poclcc.cl 2>poclcc.err
+    if grep error poclcc.err ; then
+      cat poclcc.err
+      false
+    fi
 
     runHook postInstallCheck
   '';
