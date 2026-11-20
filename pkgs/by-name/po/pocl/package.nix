@@ -14,6 +14,8 @@
   ocl-icd,
   python3,
   writableTmpDirAsHomeHook,
+  enableTBB ? true,
+  onetbb,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -77,6 +79,9 @@ stdenv.mkDerivation (finalAttrs: {
     ++ lib.optionals (!stdenv.hostPlatform.isx86_64) [
       (lib.cmakeFeature "LLC_HOST_CPU" "generic")
     ]
+    ++ [
+      (lib.cmakeBool "ENABLE_TBB_DEVICE" enableTBB)
+    ]
     ++ (
       # Fixes error: ld: cannot find -lgcc / -lgcc_s when linking from libpocl on
       # host
@@ -113,6 +118,9 @@ stdenv.mkDerivation (finalAttrs: {
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     lttng-ust
+  ]
+  ++ lib.optionals enableTBB [
+    onetbb
   ];
 
   nativeInstallCheckInputs = [
